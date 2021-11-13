@@ -1,4 +1,4 @@
-# Importting necessary libraries
+# Importing necessary libraries
 from os import link
 import requests
 import pandas as pd
@@ -42,25 +42,31 @@ def parse_article(df: pd.DataFrame, article: str) -> None:
         print(f'Article "{title}" already scraped, skipping...\n')
         return df
 
-    # Getting links articles with rel "mw:WikiLink"
+    # Getting links articles with rel "mw:WikiLink", filtering out links that has ":"
     links = soup.find_all("a", {"rel": "mw:WikiLink"})
     links = [link.get("href")[2:] for link in links]
+    links = [link for link in links if ":" not in link]
 
     # Printing article title and number of links
     print(f"> {title} ({len(links)} links)")
 
     # Appending article title with each link to dataframe
     for link in set(links):
-        df = df.append({"title": title, "link": link}, ignore_index=True)
+        # Number of times the link appears in the list
+        count = links.count(link)
+
+        # Appending link to dataframe
+        df = df.append({"title": title, "link": link, "count": count}, ignore_index=True)
 
     return df
 
 
+# TODO: Create new column for the number of times a link appears in the article
 # Creating a dataframe with article title and link columns
-df = pd.DataFrame(columns=["title", "link"])
+df = pd.DataFrame(columns=["title", "link", "count"])
 
 # Number of random articles to be scraped
-NUM_RANDOM_ARTICLES = 4
+NUM_RANDOM_ARTICLES = 50
 
 # Scraping random articles
 for i in range(NUM_RANDOM_ARTICLES):
@@ -74,10 +80,10 @@ for i in range(NUM_RANDOM_ARTICLES):
 scraped_links = []
 
 # Number of iterations
-NUM_ITERATIONS = 5
+NUM_ITERATIONS = 10
 
 # Number of links to be scraped per iteration
-NUM_LINKS_PER_ITERATION = 4
+NUM_LINKS_PER_ITERATION = 10
 
 for i in range(NUM_ITERATIONS):
     # Showing progress
@@ -106,5 +112,6 @@ for i in range(NUM_ITERATIONS):
         scraped_links.append(link)
 
 
-# Saving the dataframe to a csv file named "wikipedia_links.csv"
-df.to_csv("wikipedia_links.csv", index=False)
+    # Saving the dataframe to a csv file named "wikipedia_links.csv"
+    print("\nSaving dataframe to csv file...")
+    df.to_csv("wikipedia_links.csv", index=False)
